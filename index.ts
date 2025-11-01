@@ -96,7 +96,6 @@ dc.on("messageCreate", async msg => {
 
     if (message !== "\u034f") {
         for (const str of Object.keys(emoji)) {
-            console.debug(str);
             message = message.split(`:${str}:`).join(emoji[str]);
         }
 
