@@ -1,0 +1,17 @@
+{
+  "name": "mppmcdc",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "discord-emoji": "^2.5.3",
+    "discord.js": "^14.24.2",
+    "mpp-client-net": "^1.2.3"
+  }
+}
