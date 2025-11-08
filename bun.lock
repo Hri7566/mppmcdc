@@ -5,14 +5,14 @@
       "name": "mppmcdc",
       "dependencies": {
         "discord-emoji": "^2.5.3",
-        "discord.js": "^14.24.1",
+        "discord.js": "^14.24.2",
         "mpp-client-net": "^1.2.3",
       },
       "devDependencies": {
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5",
+        "typescript": "^5.9.3",
       },
     },
   },
