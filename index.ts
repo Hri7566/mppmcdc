@@ -70,11 +70,11 @@ cl.on("a", async msg => {
 
     if (msg.p._id === cl.getOwnParticipant()._id) return;
 
-    console.log(`${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
+    //console.log(`${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
 
     // Send to cached Discord channel
     if (channel) await channel.send({
-        content: `[MPP] ${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`,
+        content: `${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`,
         body: {
             allowed_mentions: {
                 parse: []
@@ -108,6 +108,8 @@ cl.on("a", async msg => {
     if (!msg.a.startsWith(mppCommandPrefix)) return;
 
     const args = msg.a.split(" ").slice(1);
+    if (!args[0]) return;
+
     const cmd = args[0].toLowerCase();
 
     for (const key of Object.keys(mppCommands)) {
@@ -158,17 +160,47 @@ dc.on("clientReady", async () => {
         channel = ch;
 });
 
+function handleMinecraftMessage(text: string) {
+    // emoji thing
+    for (const str of Object.keys(emoji)) {
+        text = text.split(`:${str}:`).join(emoji[str]);
+    }
+
+    // detect username by split
+    const delimiter = ": ";
+    const chunks = text.split(delimiter);
+
+    let name = chunks[0];
+    let content = chunks.slice(1).join(delimiter);
+
+    // has username?
+    if (name && content) {
+        name = name.split("\\").join("");
+
+        // change name and send message content
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name,
+            color: "#ffffff"
+        });
+
+        return content;
+    }
+
+    return text;
+}
+
 // Discord chat message
 dc.on("messageCreate", async msg => {
     if (msg.channelId !== config.discord.channelID) return;
 
-    let message = "\u034f";
+    let message = "";
 
     // is the message from a webhook or user/bot?
     if (typeof msg.webhookId === "string") {
-        // message is likely from MC server
-        //const webhook = await msg.fetchWebhook();
-        message += `[MC] ${msg.cleanContent}`;
+        message += handleMinecraftMessage(msg.cleanContent);
     } else {
         // message is likely from a normal user
         if (!msg.member) return;
@@ -182,22 +214,18 @@ dc.on("messageCreate", async msg => {
             state.mpp.originalColor = cl.getOwnParticipant().color;
 
             cl.userset({
-                name: `[Discord] ${msg.member.displayName}`,
+                name: `${msg.member.displayName}`,
                 color: msg.member.displayHexColor
             });
 
-            message += msg.content;
+            message += `${msg.content} ${msg.embeds.join(" ")}`;
         } else {
-            message += `[D] ${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")}`;
+            message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")}`;
         }
     }
 
     // crappy fallback detection
     if (message !== "\u034f") {
-        for (const str of Object.keys(emoji)) {
-            message = message.split(`: ${str}: `).join(emoji[str]);
-        }
-
         //console.debug(message);
         if (!state.mpp.muted) cl.sendChat(message);
 
