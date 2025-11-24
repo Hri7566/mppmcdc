@@ -10,8 +10,10 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@types/tmi.js": "^1.8.6",
     "discord-emoji": "^2.5.3",
     "discord.js": "^14.24.2",
-    "mpp-client-net": "^1.2.3"
+    "mpp-client-net": "^1.2.3",
+    "tmi.js": "^1.8.5"
   }
 }

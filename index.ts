@@ -1,6 +1,7 @@
 import { Client } from "mpp-client-net";
 import * as Discord from "discord.js";
 import * as dismoji from "discord-emoji";
+import tmi from "tmi.js";
 
 let config = {
     mpp: {
@@ -9,6 +10,9 @@ let config = {
     },
     discord: {
         channelID: "1426758857358704722",
+    },
+    twitch: {
+        channels: ["hritty"]
     }
 };
 
@@ -81,6 +85,11 @@ cl.on("a", async msg => {
             }
         }
     });
+
+    // send to twitch
+    for (const ch of config.twitch.channels) {
+        t.say(ch, `${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
+    }
 });
 
 const mppCommandPrefix = "!bridge";
@@ -124,7 +133,6 @@ cl.on("a", async msg => {
 });
 
 // Discord w/ Minecraft messages
-
 const dc = new Discord.Client({
     intents: [
         "Guilds",
@@ -229,6 +237,10 @@ dc.on("messageCreate", async msg => {
         //console.debug(message);
         if (!state.mpp.muted) cl.sendChat(message);
 
+        for (const ch of config.twitch.channels) {
+            t.say(ch, "\u034f" + message);
+        }
+
         // revert mpp name
         if (config.mpp.enableNameChanging) {
             cl.userset({
@@ -240,3 +252,62 @@ dc.on("messageCreate", async msg => {
 });
 
 dc.login(process.env.DISCORD_TOKEN);
+
+const TWITCH_USERNAME = process.env.TWITCH_USERNAME || "hritty";
+const TWITCH_TOKEN = process.env.TWITCH_TOKEN;
+
+// Twitch chat
+const t = new tmi.Client({
+    options: { debug: true },
+    identity: {
+        username: TWITCH_USERNAME,
+        password: TWITCH_TOKEN
+    },
+    channels: config.twitch.channels
+});
+
+t.connect().catch(console.error);
+
+t.on("message", (channel, tags, msg, self) => {
+    if (self) return;
+
+    let message = "";
+    const username = tags.username || "<unknown twitch user>";
+    const color = tags.color || "#ffffff";
+
+    // can we change name?
+    if (config.mpp.enableNameChanging) {
+        // embed name and color into chat
+        // if you ever have a username bug, consider it a race condition with this copied code
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name: username,
+            color
+        });
+
+        message += msg;
+    } else {
+        message += `${username}: ${msg}`;
+    }
+
+    // crappy fallback detection
+    if (message !== "\u034f") {
+        //console.debug(message);
+        if (!state.mpp.muted) cl.sendChat(message);
+
+        for (const ch of config.twitch.channels) {
+            if (ch === channel) continue;
+            t.say(ch, "\u034f" + message);
+        }
+
+        // revert mpp name
+        if (config.mpp.enableNameChanging) {
+            cl.userset({
+                name: state.mpp.originalName,
+                color: state.mpp.originalColor
+            });
+        }
+    }
+});
