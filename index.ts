@@ -268,7 +268,7 @@ const t = new tmi.Client({
 
 t.connect().catch(console.error);
 
-t.on("message", (channel, tags, msg, self) => {
+t.on("message", async (chan, tags, msg, self) => {
     if (self) return;
 
     let message = "";
@@ -298,7 +298,7 @@ t.on("message", (channel, tags, msg, self) => {
         if (!state.mpp.muted) cl.sendChat(message);
 
         for (const ch of config.twitch.channels) {
-            if (ch === channel) continue;
+            if (ch === chan) continue;
             t.say(ch, "\u034f" + message);
         }
 
@@ -309,5 +309,14 @@ t.on("message", (channel, tags, msg, self) => {
                 color: state.mpp.originalColor
             });
         }
+
+        if (channel) await channel.send({
+            content: `(ttv) ${username}: ${msg}`,
+            body: {
+                allowed_mentions: {
+                    parse: []
+                }
+            }
+        });
     }
 });
