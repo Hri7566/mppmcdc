@@ -266,7 +266,7 @@ const t = new tmi.Client({
     channels: config.twitch.channels
 });
 
-t.connect().catch(console.error);
+//t.connect().catch(console.error);
 
 t.on("message", async (chan, tags, msg, self) => {
     if (self) return;
