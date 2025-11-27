@@ -228,7 +228,7 @@ dc.on("messageCreate", async msg => {
                 color: msg.member.displayHexColor
             });
 
-            message += `${msg.content} ${msg.embeds.join(" ")}`;
+            message += `${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
         } else {
             message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
         }
