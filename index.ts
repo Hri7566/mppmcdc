@@ -87,9 +87,11 @@ cl.on("a", async msg => {
     });
 
     // send to twitch
+    /*
     for (const ch of config.twitch.channels) {
         t.say(ch, `${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
     }
+    */
 });
 
 const mppCommandPrefix = "!bridge";
@@ -237,9 +239,11 @@ dc.on("messageCreate", async msg => {
         //console.debug(message);
         if (!state.mpp.muted) cl.sendChat(message);
 
+        /*
         for (const ch of config.twitch.channels) {
             t.say(ch, "\u034f" + message);
         }
+        */
 
         // revert mpp name
         if (config.mpp.enableNameChanging) {
