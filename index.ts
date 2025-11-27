@@ -1,7 +1,7 @@
 import { Client } from "mpp-client-net";
 import * as Discord from "discord.js";
 import * as dismoji from "discord-emoji";
-import tmi from "tmi.js";
+//import tmi from "tmi.js";
 
 let config = {
     mpp: {
@@ -230,7 +230,7 @@ dc.on("messageCreate", async msg => {
 
             message += `${msg.content} ${msg.embeds.join(" ")}`;
         } else {
-            message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")}`;
+            message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
         }
     }
 
@@ -257,8 +257,8 @@ dc.on("messageCreate", async msg => {
 
 dc.login(process.env.DISCORD_TOKEN);
 
-const TWITCH_USERNAME = process.env.TWITCH_USERNAME || "hritty";
-const TWITCH_TOKEN = process.env.TWITCH_TOKEN;
+//const TWITCH_USERNAME = process.env.TWITCH_USERNAME || "hritty";
+//const TWITCH_TOKEN = process.env.TWITCH_TOKEN;
 
 // Twitch chat
 /*
