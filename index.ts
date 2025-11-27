@@ -257,6 +257,7 @@ const TWITCH_USERNAME = process.env.TWITCH_USERNAME || "hritty";
 const TWITCH_TOKEN = process.env.TWITCH_TOKEN;
 
 // Twitch chat
+/*
 const t = new tmi.Client({
     options: { debug: true },
     identity: {
@@ -266,7 +267,7 @@ const t = new tmi.Client({
     channels: config.twitch.channels
 });
 
-//t.connect().catch(console.error);
+t.connect().catch(console.error);
 
 t.on("message", async (chan, tags, msg, self) => {
     if (self) return;
@@ -320,3 +321,4 @@ t.on("message", async (chan, tags, msg, self) => {
         });
     }
 });
+*/
