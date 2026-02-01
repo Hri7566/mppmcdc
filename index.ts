@@ -134,7 +134,7 @@ cl.on("a", async msg => {
     }
 });
 
-// Discord w/ Minecraft messages
+// Discord w/ Minecraft/Hytale messages
 const dc = new Discord.Client({
     intents: [
         "Guilds",
@@ -202,6 +202,38 @@ function handleMinecraftMessage(text: string) {
     return text;
 }
 
+function handleHytaleMessage(text: string) {
+    // emoji thing
+    for (const str of Object.keys(emoji)) {
+        text = text.split(`:${str}:`).join(emoji[str]);
+    }
+
+    // detect username by split
+    const delimiter = ": ";
+    const chunks = text.split(delimiter);
+
+    let name = chunks[0];
+    let content = chunks.slice(1).join(delimiter);
+
+    // has username?
+    if (name && content) {
+        name = name.split("\\").join("");
+
+        // change name and send message content
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name,
+            color: "#10161e"
+        });
+
+        return content;
+    }
+
+    return text;
+}
+
 // Discord chat message
 dc.on("messageCreate", async msg => {
     if (msg.channelId !== config.discord.channelID) return;
@@ -215,8 +247,9 @@ dc.on("messageCreate", async msg => {
         // message is likely from a normal user
         if (!msg.member) return;
         if (!dc.user) return console.debug("no discord user (self)");
-        if (msg.member.id === dc.user.id) {
+        if (msg.member.id === dc.user.id) { // definitely the best way to handle this...
             if (!msg.content.startsWith("[Hytale]")) return;
+            message += handleHytaleMessage(msg.cleanContent);
         }
 
         // can we change name?
