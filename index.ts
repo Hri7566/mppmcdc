@@ -225,7 +225,7 @@ function handleHytaleMessage(text: string) {
 
         cl.userset({
             name,
-            color: "#10161e"
+            color: "#00ff99"
         });
 
         return content;
