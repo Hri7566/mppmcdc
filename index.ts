@@ -250,22 +250,22 @@ dc.on("messageCreate", async msg => {
         if (msg.member.id === dc.user.id) { // definitely the best way to handle this...
             if (!msg.content.startsWith("[Hytale]")) return;
             message += handleHytaleMessage(msg.cleanContent);
-        }
-
-        // can we change name?
-        if (config.mpp.enableNameChanging) {
-            // embed name and color into chat
-            state.mpp.originalName = cl.getOwnParticipant().name;
-            state.mpp.originalColor = cl.getOwnParticipant().color;
-
-            cl.userset({
-                name: `${msg.member.displayName}`,
-                color: msg.member.displayHexColor
-            });
-
-            message += `${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
         } else {
-            message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
+            // can we change name?
+            if (config.mpp.enableNameChanging) {
+                // embed name and color into chat
+                state.mpp.originalName = cl.getOwnParticipant().name;
+                state.mpp.originalColor = cl.getOwnParticipant().color;
+
+                cl.userset({
+                    name: `${msg.member.displayName}`,
+                    color: msg.member.displayHexColor
+                });
+
+                message += `${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
+            } else {
+                message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
+            }
         }
     }
 
