@@ -215,7 +215,9 @@ dc.on("messageCreate", async msg => {
         // message is likely from a normal user
         if (!msg.member) return;
         if (!dc.user) return console.debug("no discord user (self)");
-        if (msg.member.id === dc.user.id) return;
+        if (msg.member.id === dc.user.id) {
+            if (!msg.content.startsWith("[Hytale]")) return;
+        }
 
         // can we change name?
         if (config.mpp.enableNameChanging) {
