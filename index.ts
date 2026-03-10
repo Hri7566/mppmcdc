@@ -32,7 +32,7 @@ let state = {
 
 // MPP
 
-const cl = new Client("wss://mppclone.com", process.env.MPPNET_TOKEN);
+const cl = new Client("wss://backend.multiplayerpiano.net", process.env.MPPNET_TOKEN);
 
 let oldChannel = "";
 let lastChannelFix = Date.now();
