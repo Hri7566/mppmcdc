@@ -5,7 +5,7 @@ import * as dismoji from "discord-emoji";
 let config = {
     mpp: {
         enableNameChanging: true,
-        channel: "cheez"
+        channel: "mc.hri7566.info"
     },
     discord: {
         channelID: "1426758857358704722",
