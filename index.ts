@@ -1,6 +1,7 @@
 import { Client } from "mpp-client-net";
 import * as Discord from "discord.js";
 import * as dismoji from "discord-emoji";
+//import tmi from "tmi.js";
 
 let config = {
     mpp: {
@@ -9,6 +10,9 @@ let config = {
     },
     discord: {
         channelID: "1426758857358704722",
+    },
+    twitch: {
+        channels: ["hritty"]
     }
 };
 
@@ -28,7 +32,7 @@ let state = {
 
 // MPP
 
-const cl = new Client("wss://mppclone.com", process.env.MPPNET_TOKEN);
+const cl = new Client("wss://backend.multiplayerpiano.net", process.env.MPPNET_TOKEN);
 
 let oldChannel = "";
 let lastChannelFix = Date.now();
@@ -70,17 +74,24 @@ cl.on("a", async msg => {
 
     if (msg.p._id === cl.getOwnParticipant()._id) return;
 
-    console.log(`${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
+    //console.log(`${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
 
     // Send to cached Discord channel
     if (channel) await channel.send({
-        content: `[MPP] ${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`,
+        content: `${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`,
         body: {
             allowed_mentions: {
                 parse: []
             }
         }
     });
+
+    // send to twitch
+    /*
+    for (const ch of config.twitch.channels) {
+        t.say(ch, `${msg.p._id.substring(0, 6)} ${msg.p.name}: ${msg.a}`);
+    }
+    */
 });
 
 const mppCommandPrefix = "!bridge";
@@ -108,6 +119,8 @@ cl.on("a", async msg => {
     if (!msg.a.startsWith(mppCommandPrefix)) return;
 
     const args = msg.a.split(" ").slice(1);
+    if (!args[0]) return;
+
     const cmd = args[0].toLowerCase();
 
     for (const key of Object.keys(mppCommands)) {
@@ -121,8 +134,7 @@ cl.on("a", async msg => {
     }
 });
 
-// Discord w/ Minecraft messages
-
+// Discord w/ Minecraft/Hytale messages
 const dc = new Discord.Client({
     intents: [
         "Guilds",
@@ -158,48 +170,115 @@ dc.on("clientReady", async () => {
         channel = ch;
 });
 
+function handleMinecraftMessage(text: string) {
+    // emoji thing
+    for (const str of Object.keys(emoji)) {
+        text = text.split(`:${str}:`).join(emoji[str]);
+    }
+
+    // detect username by split
+    const delimiter = ": ";
+    const chunks = text.split(delimiter);
+
+    let name = chunks[0];
+    let content = chunks.slice(1).join(delimiter);
+
+    // has username?
+    if (name && content) {
+        name = name.split("\\").join("");
+
+        // change name and send message content
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name,
+            color: "#ffffff"
+        });
+
+        return content;
+    }
+
+    return text;
+}
+
+function handleHytaleMessage(text: string) {
+    // emoji thing
+    for (const str of Object.keys(emoji)) {
+        text = text.split(`:${str}:`).join(emoji[str]);
+    }
+
+    // detect username by split
+    const delimiter = ": ";
+    const chunks = text.split(delimiter);
+
+    let name = chunks[0];
+    let content = chunks.slice(1).join(delimiter);
+
+    // has username?
+    if (name && content) {
+        name = name.split("\\").join("");
+
+        // change name and send message content
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name,
+            color: "#00ff99"
+        });
+
+        return content;
+    }
+
+    return text;
+}
+
 // Discord chat message
 dc.on("messageCreate", async msg => {
     if (msg.channelId !== config.discord.channelID) return;
 
-    let message = "\u034f";
+    let message = "";
 
     // is the message from a webhook or user/bot?
     if (typeof msg.webhookId === "string") {
-        // message is likely from MC server
-        //const webhook = await msg.fetchWebhook();
-        message += `[MC] ${msg.cleanContent}`;
+        message += handleMinecraftMessage(msg.cleanContent);
     } else {
         // message is likely from a normal user
         if (!msg.member) return;
         if (!dc.user) return console.debug("no discord user (self)");
-        if (msg.member.id === dc.user.id) return;
-
-        // can we change name?
-        if (config.mpp.enableNameChanging) {
-            // embed name and color into chat
-            state.mpp.originalName = cl.getOwnParticipant().name;
-            state.mpp.originalColor = cl.getOwnParticipant().color;
-
-            cl.userset({
-                name: `[Discord] ${msg.member.displayName}`,
-                color: msg.member.displayHexColor
-            });
-
-            message += msg.content;
+        if (msg.member.id === dc.user.id) { // definitely the best way to handle this...
+            if (!msg.content.startsWith("[Hytale]")) return;
+            message += handleHytaleMessage(msg.cleanContent);
         } else {
-            message += `[D] ${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")}`;
+            // can we change name?
+            if (config.mpp.enableNameChanging) {
+                // embed name and color into chat
+                state.mpp.originalName = cl.getOwnParticipant().name;
+                state.mpp.originalColor = cl.getOwnParticipant().color;
+
+                cl.userset({
+                    name: `${msg.member.displayName}`,
+                    color: msg.member.displayHexColor
+                });
+
+                message += `${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
+            } else {
+                message += `${msg.member.displayName}: ${msg.content} ${msg.embeds.join(" ")} ${msg.attachments.map(a => a.url).join(" ")}`;
+            }
         }
     }
 
     // crappy fallback detection
     if (message !== "\u034f") {
-        for (const str of Object.keys(emoji)) {
-            message = message.split(`: ${str}: `).join(emoji[str]);
-        }
-
         //console.debug(message);
         if (!state.mpp.muted) cl.sendChat(message);
+
+        /*
+        for (const ch of config.twitch.channels) {
+            t.say(ch, "\u034f" + message);
+        }
+        */
 
         // revert mpp name
         if (config.mpp.enableNameChanging) {
@@ -212,3 +291,73 @@ dc.on("messageCreate", async msg => {
 });
 
 dc.login(process.env.DISCORD_TOKEN);
+
+//const TWITCH_USERNAME = process.env.TWITCH_USERNAME || "hritty";
+//const TWITCH_TOKEN = process.env.TWITCH_TOKEN;
+
+// Twitch chat
+/*
+const t = new tmi.Client({
+    options: { debug: true },
+    identity: {
+        username: TWITCH_USERNAME,
+        password: TWITCH_TOKEN
+    },
+    channels: config.twitch.channels
+});
+
+t.connect().catch(console.error);
+
+t.on("message", async (chan, tags, msg, self) => {
+    if (self) return;
+
+    let message = "";
+    const username = tags.username || "<unknown twitch user>";
+    const color = tags.color || "#ffffff";
+
+    // can we change name?
+    if (config.mpp.enableNameChanging) {
+        // embed name and color into chat
+        // if you ever have a username bug, consider it a race condition with this copied code
+        state.mpp.originalName = cl.getOwnParticipant().name;
+        state.mpp.originalColor = cl.getOwnParticipant().color;
+
+        cl.userset({
+            name: username,
+            color
+        });
+
+        message += msg;
+    } else {
+        message += `${username}: ${msg}`;
+    }
+
+    // crappy fallback detection
+    if (message !== "\u034f") {
+        //console.debug(message);
+        if (!state.mpp.muted) cl.sendChat(message);
+
+        for (const ch of config.twitch.channels) {
+            if (ch === chan) continue;
+            t.say(ch, "\u034f" + message);
+        }
+
+        // revert mpp name
+        if (config.mpp.enableNameChanging) {
+            cl.userset({
+                name: state.mpp.originalName,
+                color: state.mpp.originalColor
+            });
+        }
+
+        if (channel) await channel.send({
+            content: `(ttv) ${username}: ${msg}`,
+            body: {
+                allowed_mentions: {
+                    parse: []
+                }
+            }
+        });
+    }
+});
+*/
